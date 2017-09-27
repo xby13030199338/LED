@@ -14,12 +14,12 @@
 #include "alasmart/aipwm.h"
 
 
-struct sockaddr_in server_addr, client_addr;
+struct sockaddr_in server_addr, client_addr, remote_addr;
 socklen_t sin_size;
 
 #define SPI_FLASH_SEC_SIZE 4096
-#define server_ip "www.trencon.com"
-#define server_port 9999
+#define server_ip "196.168.4.1"
+#define server_port 1234
 
 xTaskHandle xHandleConnect=NULL;
 xTaskHandle xHandleWrite=NULL;
@@ -745,9 +745,64 @@ void remote_read()
 
 void task_connect(void *pvParameters)
 {
-
-
-
+//	int32 listenfd;
+//
+//	int32 ret;
+//
+//	int	stack_counter=0;
+//
+//	/*	Create	socket	for	incoming	connections	*/
+//
+//	do
+//	{
+//		listenfd =socket(AF_INET,SOCK_STREAM,0);
+//		if	(listenfd == -1)
+//		{
+//
+//			printf("ESP8266	TCP	server task > socket error\n");
+//
+//		    vTaskDelay(1000/portTICK_RATE_MS);
+//		}
+//
+//	}while(listenfd	==	-1);
+//
+//	printf("ESP8266	TCP	server	task > create	socket:	%d\n",	server_sock);
+//
+//	/*	Bind	to	the	local	port	*/
+//
+//	do{
+//
+//		ret	= bind(listenfd, (struct sockaddr *)&server_addr,sizeof(server_addr));
+//
+//		if	(ret!=0){
+//
+//			printf("ESP8266	TCP	server	task	>	bind	fail\n");
+//
+//			vTaskDelay(1000/portTICK_RATE_MS);
+//
+//		}
+//
+//	}while(ret	!=	0);
+//
+//	printf("ESP8266	TCP	server	task	>	port:%d\n",ntohs(server_addr.sin_port));
+//
+//	do{
+//
+//		/*	Listen	to	the	local	connection	*/
+//
+//		ret	= listen(listenfd,	5);
+//
+//		if	(ret	!=	0){
+//
+//			printf("ESP8266	TCP	server	task	>	failed	to	set	listen	queue!\n");
+//
+//			vTaskDelay(1000/portTICK_RATE_MS);
+//
+//		}
+//
+//	}while(ret	!=	0);
+//
+	printf("ESP8266	TCP	server	task	>	listen	ok\n");
 	while (1) {
 
 		if(!remote_connected){
@@ -757,18 +812,18 @@ void task_connect(void *pvParameters)
 			struct sockaddr_in remote_ip;
 			bzero(&remote_ip, sizeof(struct sockaddr_in));
 			remote_ip.sin_family = AF_INET;
-
+//
 			struct ip_addr addr;
+//
+//
+//			netconn_gethostbyname(server_ip,&addr);
+//
+//			while(addr.addr==0){
+//				vTaskDelay(200 / portTICK_RATE_MS);
+//				netconn_gethostbyname(server_ip,&addr);
+//			}
 
-
-			netconn_gethostbyname(server_ip,&addr);
-
-			while(addr.addr==0){
-				vTaskDelay(200 / portTICK_RATE_MS);
-				netconn_gethostbyname(server_ip,&addr);
-			}
-
-			remote_ip.sin_addr.s_addr = addr.addr;
+			remote_ip.sin_addr.s_addr = inet_addr ("192.168.4.1");
 			remote_ip.sin_port = htons(server_port);
 
 			int keepAlive = 1;
@@ -780,11 +835,11 @@ void task_connect(void *pvParameters)
 			printf("remote_connect start.....!\n");
 
 			sta_socket = socket(PF_INET, SOCK_STREAM, 0);
-			lwip_setsockopt(sta_socket,SOL_SOCKET,SO_KEEPALIVE,(void*)&keepAlive,sizeof(keepAlive));
-			lwip_setsockopt(sta_socket,IPPROTO_TCP,TCP_KEEPIDLE,(void *)&keepIdle,sizeof(keepIdle));
-			lwip_setsockopt(sta_socket,IPPROTO_TCP,TCP_KEEPINTVL,(void *)&keepInterval,sizeof(keepInterval));
-			lwip_setsockopt(sta_socket,IPPROTO_TCP,TCP_KEEPCNT,(void *)&keepCount,sizeof(keepCount));
-			//lwip_setsockopt(sta_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+//			lwip_setsockopt(sta_socket,SOL_SOCKET,SO_KEEPALIVE,(void*)&keepAlive,sizeof(keepAlive));
+//			lwip_setsockopt(sta_socket,IPPROTO_TCP,TCP_KEEPIDLE,(void *)&keepIdle,sizeof(keepIdle));
+//			lwip_setsockopt(sta_socket,IPPROTO_TCP,TCP_KEEPINTVL,(void *)&keepInterval,sizeof(keepInterval));
+//			lwip_setsockopt(sta_socket,IPPROTO_TCP,TCP_KEEPCNT,(void *)&keepCount,sizeof(keepCount));
+//			lwip_setsockopt(sta_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
 			if (-1 == sta_socket) {
 				printf("C > socket fail!\n");
@@ -793,12 +848,12 @@ void task_connect(void *pvParameters)
 			}
 
 			printf("%s=%s\n",server_ip,inet_ntoa((struct ip_addr){addr.addr}));
-			if (0 != connect(sta_socket, (struct sockaddr *)(&remote_ip), sizeof(struct sockaddr))) {
-				close(sta_socket);
-				printf("C > connect fail!\n");
-				vTaskDelay(60000 / portTICK_RATE_MS);
-				continue;
-			}
+//			if (0 != connect(sta_socket, (struct sockaddr *)(&remote_ip), sizeof(struct sockaddr))) {
+//				close(sta_socket);
+//				printf("C > connect fail!\n");
+//				vTaskDelay(60000 / portTICK_RATE_MS);
+//				continue;
+//			}
 
 			printf("C > connect ok!\n");
 
@@ -1348,6 +1403,15 @@ void user_init(void)
 	ETS_UART_INTR_ENABLE();
 
 
+//	struct	station_info	*	station	=	wifi_softap_get_station_info();
+//	while(station){
+//					printf("bssid	:	MACSTR,	ip	:	IPSTR/n", MAC2STR(station->bssid),	IP2STR(&station->ip));
+//					station	=	STAILQ_NEXT(station,	next);
+//	}
+//	wifi_softap_free_station_info();				//	Free	it	by	calling	functions
+
+
+
 	uint8_t value[16];
 	spi_flash_read(0x55*4096,(uint32*)value, 16);
 	aipwm_init();
@@ -1455,48 +1519,76 @@ void user_init(void)
 
 	}
 */
-	wifi_set_opmode(STATION_MODE);
 
-	struct station_config *config = (struct station_config *)zalloc(sizeof(struct station_config));
-	wifi_station_get_config(config);
+	//set SoftAP mode
+	wifi_set_opmode(SOFTAP_MODE);
 
-	sprintf(config->ssid,"CMCC-EDU");
-	sprintf(config->password,"Freescale503");
+	struct	softap_config*config=(struct softap_config*)zalloc(sizeof(struct softap_config));																					//	initialization
 
-	wifi_station_set_config(config);
+	wifi_softap_get_config(config);			//	Get	soft-AP	config	first.
+
+	sprintf(config->ssid,"esp8266");
+
+	sprintf(config->password,"1234567890");
+
+	config->authmode=AUTH_WPA_WPA2_PSK;
+
+	config->ssid_len=0;													//	or	its	actual	SSID	length
+
+	config->max_connection=4;
+
+	wifi_softap_set_config(config);			//	Set	ESP8266	soft-AP	config
+
 	free(config);
+
+	//build TCP Server
 	bzero(&server_addr, sizeof(struct sockaddr_in));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = INADDR_ANY;
 	server_addr.sin_port = htons(1234);
 
-
-	if(strcmp(config->ssid,"")==0)
-	{
-		xTaskCreate(smartconfig_task, "smartconfig_task", 256, NULL, 2, NULL);
-	}
-
-
-	strcpy(phoneuuid,"none");
-
-	ala_init("www.trencon.com",9999,get_deviceid(),get_devicetype(),version,ip,wifiid,wifipwd,phoneuuid);
-	ala_attach_attribute("rgb",ala_set_rgb,ala_get_rgb);
-	ala_attach_attribute("rgblevel",ala_set_rgblevel,ala_get_rgblevel);
-	ala_attach_attribute("wlevel",ala_set_wlevel,ala_get_wlevel);
-	ala_attach_attribute("on",ala_set_on,ala_get_on);
-	ala_attach_attribute("state",ala_set_state,ala_get_state);
-	ala_attach_attribute("ip",ala_set_ip,ala_get_ip);
-	ala_attach_attribute("blinkval",ala_set_blinkval,ala_get_blinkval);
-	ala_attach_attribute("blinktime",ala_set_blinktime,ala_get_blinktime);
-	ala_attach_attribute("firmware",ala_set_firmware,ala_get_firmware);
-
+//	wifi_set_opmode(STATION_MODE);
+//
+//	struct station_config *config = (struct station_config *)zalloc(sizeof(struct station_config));
+//	wifi_station_get_config(config);
+//
+//	sprintf(config->ssid,"CMCC-EDU");
+//	sprintf(config->password,"Freescale503");
+//
+//	wifi_station_set_config(config);
+//	free(config);
+//	bzero(&server_addr, sizeof(struct sockaddr_in));
+//	server_addr.sin_family = AF_INET;
+//	server_addr.sin_addr.s_addr = INADDR_ANY;
+//	server_addr.sin_port = htons(1234);
+//
+//
+//	if(strcmp(config->ssid,"")==0)
+//	{
+//		xTaskCreate(smartconfig_task, "smartconfig_task", 256, NULL, 2, NULL);
+//	}
+//
+//
+//	strcpy(phoneuuid,"none");
+//
+//	ala_init("www.trencon.com",9999,get_deviceid(),get_devicetype(),version,ip,wifiid,wifipwd,phoneuuid);
+//	ala_attach_attribute("rgb",ala_set_rgb,ala_get_rgb);
+//	ala_attach_attribute("rgblevel",ala_set_rgblevel,ala_get_rgblevel);
+//	ala_attach_attribute("wlevel",ala_set_wlevel,ala_get_wlevel);
+//	ala_attach_attribute("on",ala_set_on,ala_get_on);
+//	ala_attach_attribute("state",ala_set_state,ala_get_state);
+//	ala_attach_attribute("ip",ala_set_ip,ala_get_ip);
+//	ala_attach_attribute("blinkval",ala_set_blinkval,ala_get_blinkval);
+//	ala_attach_attribute("blinktime",ala_set_blinktime,ala_get_blinktime);
+//	ala_attach_attribute("firmware",ala_set_firmware,ala_get_firmware);
+//
 	wifi_set_event_handler_cb(wifi_handle_event_cb);
-
-
-	xTaskCreate(task_connect, "tsk_connect", 256, NULL, 1, &xHandleConnect);
-
-
-
+//
+//
+	xTaskCreate(task_local, "task_local", 256, NULL, 1, &xHandleConnect);
+//
+//
+//
 	hw_timer_init(1);
 	hw_timer_arm(500000);
 	hw_timer_set_func(test_timer2);
