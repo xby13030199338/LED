@@ -1373,6 +1373,9 @@ void test_timer2(void)
 		else
 		{
 			ala_set_on("1");
+			ala_set_rgb("0#0#0");
+			wlevel = 16;
+
 		}
 	}
 }
